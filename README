@@ -1,0 +1,90 @@
+Terminalscope
+=============
+
+Matt Sarnoff (www.msarnoff.org)
+February 2010
+
+The Terminalscope is an Atmel AVR-based, VT100-compatible serial terminal
+that uses an oscilloscope or XY monitor as a display and a PS/2 keyboard
+for input. It generates a raster scan in the same manner as a television.
+
+The Terminalscope board uses two microcontrollers: an ATmega328P for display
+generation and an ATtiny45 to read and decode keystrokes from the keyboard.
+The ATmega328P reads keystrokes from the ATtiny45 over SPI.
+
+For more project information, schematics, and setup instructions:
+http://www.msarnoff.org/terminalscope/
+
+
+Compiling
+---------
+Makefiles are included, and the project should build fine with avr-gcc.
+
+To build the firmware for the ATtiny45, enter the "keybuffer" directory
+and type "make hex". Then, connect the chip to your ISP programmer, and type
+"make fuse" and "make flash" to set the fuses and upload the firmware.
+
+To build the firmware for the ATmega328P, type "make hex" from the main
+directory. Then, connect the ATmega328P to your ISP programmer, and 
+type "make fuse" and "make flash".
+
+terminal.c contains a fairly complete implementation of an ANSI/VT100
+escape sequence interpreter. It might be useful in other projects.
+
+video.c and video.h contain complete routines for manipulating characters
+and lines in a 2D array of character cells.
+
+Changing terminal settings
+--------------------------
+When the Terminalscope is first powered on, pressing the NumLock key
+on the connected keyboard enters the setup menu.
+
+You can store two "profiles" and change between them with the toggle
+switch on the board. This lets you, for example, connect the Terminalscope
+to either a PC at 38400 baud or an Arduino at 9600 baud without mucking
+around in the menu.
+
+
+Using with a *nix computer
+--------------------------
+The Terminalscope functions quite well as a serial console connected to
+a Linux/Unix computer, using a 5 volt USB-to-TTL adapter or cable.
+
+To get a login shell on the Terminalscope in Ubuntu (Karmic and newer),
+type the following into /etc/init/ttyUSB0.conf:
+
+start on stopped rc RUNLEVEL=[2345]
+stop on runlevel [!2345]
+
+respawn
+exec /sbin/getty -L 38400 ttyUSB0 vt100
+
+
+Then you can start the login process with
+sudo start ttyUSB0
+
+
+One last thing. When you log in, Linux will think the terminal is 80 columns
+wide (it's really 54) and will assume it supports UTF-8 (which it doesn't).
+To fix this, you should add the following to your .bash_profile
+(assuming you use bash):
+
+if [ "$TTY" == '/dev/ttyUSB0' ]; then
+  stty rows 54
+  stty cols 24
+  export ROWS=24
+  export LINES=24
+  export COLUMNS=54
+  export LANG=POSIX
+fi
+
+
+Custom fonts
+------------
+A 256-character, 6x8-pixel font is included in the "fonts" directory.
+Fonts are simply .inc files (assembler include files) containing
+256 eight-byte entries.
+
+"font2inc.rb" is a Ruby script that will convert a grayscale PGM image
+to an .inc font file. See that file for usage details. 
+PGM images can be generated from many graphics programs, including the GIMP. 
